@@ -31,7 +31,7 @@ module "tf-instances" {
  number_of_instances         = var.instance_number  
  vswitch_id                  = alicloud_vswitch.vsw.id  
  group_ids                   = [alicloud_security_group.default.id]  
- private_ips                 = ["172.16.0.10", "172.16.0.11", "172.16.0.12"]  
+ private_ips                 = ["172.16.0.10", "172.16.0.11"]  
  image_ids                   = ["ubuntu_18_04_64_20G_alibase_20190624.vhd"]  
  instance_type               = var.instance_type   
  internet_max_bandwidth_out  = 10
@@ -62,3 +62,30 @@ module "slb" {
     },
   ]
 }
+module "eip" {
+  source = "./modules/eip"
+
+  create               = true
+  name                 = "ecs-eip"
+  description          = "An EIP associated with ECS instance."
+  bandwidth            = 1
+  internet_charge_type = "PayByTraffic"
+  instance_charge_type = "PostPaid"
+  period               = 1
+  resource_group_id    = ""
+  tags = {
+    Env      = "Private"
+    Location = "foo"
+  }
+
+  # The number of instances created by other modules
+  number_of_computed_instances = 1
+  computed_instances = [
+    {
+      instance_ids  = [module.slb.this_slb_id]
+      instance_type = "SlbInstance"
+      private_ips   = []
+    }
+  ]
+}
+
